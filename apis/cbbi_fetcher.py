@@ -1,6 +1,7 @@
 import requests
 import json
 from datetime import datetime, timedelta
+import math
 
 class CBBIFetcher:
   def __init__(self):
@@ -9,12 +10,6 @@ class CBBIFetcher:
       'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
     }
     
-  #def get_latest_cbbi(self):
-  
-  # def get_bitcoin_market_chart_max(self):
-    
-  #   return result["Price"]
-  
   def fetch_cbbi_data(self):
     now = datetime.now()
     today = datetime(now.year, now.month, now.day, 2, 0, 0)
@@ -22,7 +17,7 @@ class CBBIFetcher:
 
     cbbi_data = {}
     
-    with open("db/cbbi_data.json", "r") as f:
+    with open("data/cbbi_data.json", "r") as f:
       data = f.read()
       if data:
         cbbi_data = json.loads(data)
@@ -31,10 +26,9 @@ class CBBIFetcher:
           print("Using cached data")
           return cbbi_data
                 
-      
     print("Fetching new data")
     result = requests.get(self.BASE_URL, headers=self.headers).json()
-    with open("db/cbbi_data.json", "w") as f:
+    with open("data/cbbi_data.json", "w") as f:
       json.dump(result, f)
     
     return result
@@ -51,3 +45,12 @@ class CBBIFetcher:
     return {
       "prices": formatted_data
     }
+  def get_cbbi(self, days=1):
+    cbbi_history = self.fetch_cbbi_data()["Confidence"]
+
+    cbbi_history_array = list(cbbi_history.values())
+    cbbi_history_array = cbbi_history_array[-int(days):]
+    cbbi_history_array = [round(value * 100, 2) for value in cbbi_history_array]
+    cbbi_history_array.reverse()
+
+    return cbbi_history_array

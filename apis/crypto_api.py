@@ -19,8 +19,7 @@ class CryptoAPI:
       else:
         days = 365
     
-    days = int(days)
-    if days > 365:
+    if int(days) > 365:
       days = 365
     
     result = requests.get(f'{self.BASE_URL}/coins/{crypto}/market_chart?vs_currency={currency}&days={days}&precision=0', headers=self.headers).json()

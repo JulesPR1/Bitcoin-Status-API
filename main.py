@@ -3,6 +3,8 @@ from fastapi.responses import RedirectResponse
 
 from apis.crypto_api import CryptoAPI
 from apis.cbbi_fetcher import CBBIFetcher
+from apis.f_and_g_api import FGAPI
+from apis.faireconomy_api import FaireconomyAPI
 
 app = FastAPI()
 
@@ -39,3 +41,34 @@ def get_crypto_market_chart(crypto="bitcoin", currency="usd", days=1):
   Anything above 365 days will return max days data (since 2011)
   """
   return CryptoAPI().get_crypto_market_chart(crypto, currency, days)
+
+@app.get("/fng")
+def get_fng(days=1):
+  """
+  Get Fear and Greed Index
+  
+  First value is the most recent one
+  
+  Update Frequency: everyday at 00:00 UTC
+  """
+  return FGAPI().get_fng_simple(days)
+
+@app.get("/cbbi")
+def get_cbbi(days=1):
+  """
+  Get CBBI
+  
+  First value is the most recent one
+
+  Update Frequency: everyday at 00:00 UTC
+  """
+  return CBBIFetcher().get_cbbi(days)
+
+@app.get("/upcomming-events")
+def get_upcomming_events(only_high_impact=False):
+  """
+  Get upcomming week events from Forex Factory
+  
+  Update Frequency: everyday at 00:00 UTC
+  """
+  return FaireconomyAPI().get_forex_factory_data(only_high_impact)
