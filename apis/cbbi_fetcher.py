@@ -1,7 +1,6 @@
 import requests
 import json
-from datetime import datetime, timedelta
-import math
+from datetime import datetime
 
 class CBBIFetcher:
   def __init__(self):

@@ -5,15 +5,37 @@ from apis.crypto_api import CryptoAPI
 from apis.cbbi_fetcher import CBBIFetcher
 from apis.f_and_g_api import FGAPI
 from apis.faireconomy_api import FaireconomyAPI
+from apis.coin_telegraph_rss_reader import CoinTelegraphRssReader
 
-app = FastAPI()
+
+tags_metadata = [
+    {
+      "name": "cryptocurrency",
+      "description": "Get cryptocurrency price",
+    },
+    {
+      "name": "indexes",
+      "description": "Get Indexes about Bitcoin",
+    },
+    {
+      "name": "events",
+      "description": "Get upcomming events from Forex Factory"
+    },
+    {
+      "name": "news",
+      "description": "Get latest news from CoinTelegraph RSS Feed"
+    }
+]
+
+
+app = FastAPI(openapi_tags=tags_metadata)
 
 
 @app.get("/", include_in_schema=False)
 def doc():
   return RedirectResponse(url='/docs')
 
-@app.get("/crypto-price")
+@app.get("/crypto-price", tags=["cryptocurrency"])
 def get_crypto_price(crypto="bitcoin", currency="usd"):
   """
   Display current crypto price
@@ -22,7 +44,7 @@ def get_crypto_price(crypto="bitcoin", currency="usd"):
   """
   return CryptoAPI().get_crypto_price(crypto, currency)
 
-@app.get("/crypto-market-chart")
+@app.get("/crypto-market-chart", tags=["cryptocurrency"])
 def get_crypto_market_chart(crypto="bitcoin", currency="usd", days=1):
   """
   Get historical market data include price, market cap, and 24h volume
@@ -42,7 +64,7 @@ def get_crypto_market_chart(crypto="bitcoin", currency="usd", days=1):
   """
   return CryptoAPI().get_crypto_market_chart(crypto, currency, days)
 
-@app.get("/fng")
+@app.get("/fng", tags=["indexes"])
 def get_fng(days=1):
   """
   Get Fear and Greed Index
@@ -53,7 +75,7 @@ def get_fng(days=1):
   """
   return FGAPI().get_fng_simple(days)
 
-@app.get("/cbbi")
+@app.get("/cbbi", tags=["indexes"])
 def get_cbbi(days=1):
   """
   Get CBBI
@@ -64,11 +86,27 @@ def get_cbbi(days=1):
   """
   return CBBIFetcher().get_cbbi(days)
 
-@app.get("/upcomming-events")
-def get_upcomming_events(only_high_impact=False):
+@app.get("/upcomming-events", tags=["events"])
+def get_upcomming_events(currencies="USD,EUR", only_high_impact=False):
   """
   Get upcomming week events from Forex Factory
   
   Update Frequency: everyday at 00:00 UTC
   """
-  return FaireconomyAPI().get_forex_factory_data(only_high_impact)
+  return FaireconomyAPI().get_forex_factory_data(currencies, only_high_impact)
+
+@app.get("/available-currencies", tags=["events"])
+def get_available_currencies():
+  """
+  Get available currencies for Forex Factory events
+  """
+  return FaireconomyAPI().get_available_currencies()
+
+@app.get("/news", tags=["news"])
+def get_news():
+  """
+  Get latest news from CoinTelegraph
+  
+  Update Frequency: every 5 minutes
+  """
+  return CoinTelegraphRssReader().get_news()
