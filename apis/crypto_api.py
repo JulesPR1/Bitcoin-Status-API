@@ -10,6 +10,10 @@ class CryptoAPI:
 
   def get_crypto_price(self, crypto="bitcoin", currency="usd"):
     result = requests.get(f'{self.BASE_URL}/coins/markets?vs_currency={currency}&ids={crypto}&order=id_asc&per_page=100&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d%2C%204d%2C30d%2C200d%2C1y', headers=self.headers).json()
+    if not result:
+      return {"error": "Invalid crypto currency"}
+    if "error" in result:
+      return result
     return result.pop().get('current_price')
 
   def get_crypto_market_chart(self, crypto="bitcoin", currency="usd", days=1):
