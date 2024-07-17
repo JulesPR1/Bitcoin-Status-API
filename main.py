@@ -7,6 +7,7 @@ from apis.f_and_g_api import FGAPI
 from apis.faireconomy_api import FaireconomyAPI
 from apis.coin_telegraph_rss_reader import CoinTelegraphRssReader
 
+from fastapi.responses import FileResponse
 
 tags_metadata = [
     {
@@ -110,3 +111,8 @@ def get_news():
   Update Frequency: every 5 minutes
   """
   return CoinTelegraphRssReader().get_news()
+
+# display graph.html
+@app.get("/chart", include_in_schema=False)
+def display_chart():
+  return FileResponse("graph.html")

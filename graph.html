@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Chart.js Line Chart with Dates</title>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+
+	<!-- Include a date adapter for Chart.js (here we use date-fns) -->
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <canvas id="chart" style="width: 1000px; height: 500px;"></canvas>	<script>
+		$(document).ready(function() {
+      const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36";
+      const priceUrl = 'http://127.0.0.1:8000/crypto-market-chart?crypto=bitcoin&currency=usd&days=max';
+      const cbbiUrl = 'http://127.0.0.1:8000/cbbi?days=4000';
+      const fngUrl = 'http://127.0.0.1:8000/fng?days=4000';
+      
+      function fetchData(url) {
+          return $.ajax({
+              url: url,
+              method: 'GET',
+              headers: {
+                  'User-Agent': userAgent
+              }
+          });
+      }
+
+      function generateDateLabels(days) {
+          const dates = [];
+          const today = new Date('2024-07-17');
+          for (let i = 0; i < days; i++) {
+              let date = new Date(today);
+              date.setDate(today.getDate() - i);
+              dates.push(date.getTime());
+          }
+          return dates.reverse(); // Ensure dates are in chronological order
+      }
+
+      function processData(dateLabels, priceData, cbbiData, fngData) {
+        const maxLength = dateLabels.length;
+    
+        // Extend cbbiData and fngData to match the length of dateLabels/priceData.prices
+        const extendedCbbiData = cbbiData.reverse().concat(new Array(maxLength - cbbiData.length).fill(0)).reverse();
+        const extendedFngData = fngData.reverse().concat(new Array(maxLength - fngData.length).fill(0)).reverse();
+    
+        const seriesPrices = priceData.prices.map((item, index) => {
+            return { x: dateLabels[index], y: item[1] };
+        });
+    
+        const seriesCbbi = extendedCbbiData.map((value, index) => {
+            return { x: dateLabels[index], y: value };
+        });
+    
+        const seriesFng = extendedFngData.map((value, index) => {
+            return { x: dateLabels[index], y: value };
+        });
+    
+        return { seriesPrices, seriesCbbi, seriesFng };
+    }
+
+			$.when(
+				fetchData(priceUrl),
+				fetchData(cbbiUrl),
+				fetchData(fngUrl)
+			).done(function(priceResponse, cbbiResponse, fngResponse) {
+				const dateLabels = generateDateLabels(priceResponse[0].prices.length);
+				var { seriesPrices, seriesCbbi, seriesFng } = processData(dateLabels, priceResponse[0], cbbiResponse[0].reverse(), fngResponse[0].reverse());
+
+        
+
+				const ctx = document.getElementById('chart').getContext('2d');
+				const chart = new Chart(ctx, {
+					type: 'line',
+					data: {
+						datasets: [
+							{
+								label: 'Price',
+								data: seriesPrices,
+								yAxisID: 'y-axis-price',
+								borderColor: 'orange',
+                pointRadius: 0,
+							},
+							{
+								label: 'CBBI Score',
+								data: seriesCbbi,
+								yAxisID: 'y-axis-cbbi',
+								borderColor: 'blue',
+                pointRadius: 0,
+							},
+							{
+								label: 'Fear & Greed',
+								data: seriesFng,
+								yAxisID: 'y-axis-fng',
+								borderColor: 'green',
+                pointRadius: 0,
+							}
+						]
+					},
+					options: {
+						scales: {
+							x: {
+								type: 'time',
+								time: {
+									unit: 'day',
+									tooltipFormat: 'dd MMM yyyy'
+								},
+								title: {
+									display: true,
+									text: 'Date'
+								}
+							},
+							'y-axis-price': {
+                  type: 'logarithmic',
+                  position: 'left',
+                  title: {
+                      display: true,
+                      text: 'Price'
+                  },
+                  ticks: {
+                      min: 1, // Minimum value
+                      max: 100000, // Maximum value
+                      callback: function(value, index, values) {
+                          // Specify the values you want to display on the y-axis
+                          const allowedValues = [1, 2, 4, 10, 20, 40, 100, 200, 400, 1000, 2000, 4000, 10000, 20000, 40000, 100000];
+                          if (allowedValues.includes(value)) {
+                              return value;
+                          }
+                      }
+                  },
+                  afterBuildTicks: function(chartObj) {
+                    chartObj.ticks = [
+                        {value: 1, label: '1'},
+                        {value: 2, label: '2'},
+                        {value: 4, label: '4'},
+                        {value: 10, label: '10'},
+                        {value: 20, label: '20'},
+                        {value: 40, label: '40'},
+                        {value: 100, label: '100'},
+                        {value: 200, label: '200'},
+                        {value: 400, label: '400'},
+                        {value: 1000, label: '1k'},
+                        {value: 2000, label: '2k'},
+                        {value: 4000, label: '4k'},
+                        {value: 10000, label: '10k'},
+                        {value: 20000, label: '20k'},
+                        {value: 40000, label: '40k'},
+                        {value: 100000, label: '100k'}
+                    ];
+                }
+              },
+							'y-axis-cbbi': {
+								type: 'linear',
+								position: 'right',
+								title: {
+									display: true,
+									text: 'CBBI Score'
+								}
+							},
+							'y-axis-fng': {
+								type: 'linear',
+								position: 'right',
+								grid: {
+									drawOnChartArea: false,
+								},
+								title: {
+									display: true,
+									text: 'Fear & Greed'
+								}
+							}
+						},
+            plugins: {
+              zoom: {
+                  zoom: {
+                      wheel: {
+                          enabled: true,
+                      },
+                      pinch: {
+                          enabled: true,
+                      },
+                      mode: 'xy',
+                  },
+                  pan: {
+                      enabled: true,
+                      mode: 'xy',
+                  }
+              }
+            }
+					}
+				});
+			}).fail(function() {
+				console.error("Failed to fetch data.");
+			});
+		});
+	</script>
+</body>
+</html>
