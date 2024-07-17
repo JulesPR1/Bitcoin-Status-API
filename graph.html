@@ -15,10 +15,10 @@
   <canvas id="chart" style="width: 1000px; height: 500px;"></canvas>	<script>
 		$(document).ready(function() {
       const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36";
-      const priceUrl = 'http://127.0.0.1:8000/crypto-market-chart?crypto=bitcoin&currency=usd&days=max';
-      const cbbiUrl = 'http://127.0.0.1:8000/cbbi?days=4000';
-      const fngUrl = 'http://127.0.0.1:8000/fng?days=4000';
-      
+      const priceUrl = '/crypto-market-chart?crypto=bitcoin&currency=usd&days=max';
+      const cbbiUrl = '/cbbi?days=4000';
+      const fngUrl = '/fng?days=4000';
+     
       function fetchData(url) {
           return $.ajax({
               url: url,
